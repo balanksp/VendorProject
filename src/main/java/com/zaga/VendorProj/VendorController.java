@@ -1,6 +1,9 @@
 package com.zaga.VendorProj;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +16,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 @RestController
 @RequestMapping("/vendor")
 public class VendorController {
+    private static final Logger logger = LogManager.getLogger(VendorController.class);
 
     @Autowired
     VendorRepo repo;
@@ -23,44 +27,37 @@ public class VendorController {
     @Autowired
     VendorService service;
 
-    // @GetMapping("/vendorGetDataFromExternalApi")
-    // public VendorEntity getOrderDetailsFromExternalAPI(Long id) {
-    // ResponseEntity<VendorEntity> responseEntity =
-    // restTemplate.getForEntity("http://localhost:5089/orders/getOrders?id=97",
-    // VendorEntity.class, null);
+    @Autowired
+    Config appConfig;
 
-    // if (responseEntity.getStatusCode() == HttpStatus.OK) {
-    // VendorEntity vendor = responseEntity.getBody();
-    // repo.save(vendor);
-
-    // }
-    // return responseEntity.getBody();
-    // }
-
-    // @GetMapping("/external")
-    // public VendorEntity getBooksFromExternalApi(@RequestParam Long id) {
-
-    // VendorEntity getresult = service.fetchBooksFromExternalApi();
-    // return getresult;
-    // }
+    public VendorController(Config appConfig) {
+        this.appConfig = appConfig;
+    }
 
     @GetMapping("/vendorGetDataFromExternalApi")
     public VendorEntity getOrderDetailsFromExternalAPI(@RequestParam Long id) {
-        String apiUrl = "http://localhost:5089/orders/getOrders";
+        try {
+            // Create the URL with the query parameter using a UriComponentsBuilder
+            UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(appConfig.getApiUrl())
+                    .queryParam("id", id);
+            logger.info("Received request to get data by the product Id");
 
-        // Create the URL with the query parameter using a UriComponentsBuilder
-        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(apiUrl)
-                .queryParam("id", id);
+            ResponseEntity<VendorEntity> responseEntity = restTemplate.getForEntity(builder.toUriString(),
+                    VendorEntity.class);
 
-        ResponseEntity<VendorEntity> responseEntity = restTemplate.getForEntity(builder.toUriString(),
-                VendorEntity.class);
+            if (responseEntity.getStatusCode() == HttpStatus.OK) {
+                logger.info("Received response from the product API");
 
-        if (responseEntity.getStatusCode() == HttpStatus.OK) {
-            VendorEntity vendor = responseEntity.getBody();
-            repo.save(vendor);
+                VendorEntity vendor = responseEntity.getBody();
+                repo.save(vendor);
+                logger.info("Updated vendor data successfully");
+            }
+
+            return responseEntity.getBody();
+        } catch (Exception e) {
+            logger.error("Error while fetching order details from the external API", e);
+            throw e;
         }
-
-        return responseEntity.getBody();
     }
 
 }

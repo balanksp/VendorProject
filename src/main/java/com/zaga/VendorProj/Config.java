@@ -1,13 +1,18 @@
-// package com.zaga.VendorProj;
+package com.zaga.VendorProj;
 
-// import org.springframework.context.annotation.Bean;
-// import org.springframework.context.annotation.Configuration;
-// import org.springframework.web.client.RestTemplate;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
 
-// @Configuration
-// public class Config {
-//      @Bean
-//     public RestTemplate restTemplate() {
-//         return new RestTemplate();
-//     }
-// }
+@Component
+@ConfigurationProperties(prefix = "app")
+public class Config {
+    private String apiUrl;
+
+    public String getApiUrl() {
+        return apiUrl;
+    }
+
+    public void setApiUrl(String apiUrl) {
+        this.apiUrl = apiUrl;
+    }
+}
